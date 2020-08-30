@@ -68,7 +68,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
             FilteringSettings filterSettings = new FilteringSettings();
             filterSettings.renderQueueRange = RenderQueueRange.all;
-            filterSettings.layerMask = -1;
+            filterSettings.layerMask = m_Renderer2DData.transparentLayerMask;
             filterSettings.renderingLayerMask = 0xFFFFFFFF;
             filterSettings.sortingLayerRange = SortingLayerRange.all;
 

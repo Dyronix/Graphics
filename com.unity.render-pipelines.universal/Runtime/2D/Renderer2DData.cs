@@ -1,3 +1,5 @@
+#pragma warning disable 0649
+
 using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -21,6 +23,9 @@ namespace UnityEngine.Experimental.Rendering.Universal
             Unlit,
             Custom
         }
+
+        [SerializeField]
+        LayerMask m_TransparentLayerMask;
 
         [SerializeField]
         TransparencySortMode m_TransparencySortMode = TransparencySortMode.Default;
@@ -87,6 +92,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
         internal Shader shadowGroupShader => m_ShadowGroupShader;
         internal Shader removeSelfShadowShader => m_RemoveSelfShadowShader;
         internal PostProcessData postProcessData => m_PostProcessData;
+        internal LayerMask transparentLayerMask => m_TransparentLayerMask;
         internal TransparencySortMode transparencySortMode => m_TransparencySortMode;
         internal Vector3 transparencySortAxis => m_TransparencySortAxis;
 

@@ -36,9 +36,13 @@ namespace UnityEngine.Experimental.Rendering.Universal
             m_RenderStateBlock.mask |= RenderStateMask.Stencil;
             m_RenderStateBlock.stencilReference = reference;
             m_RenderStateBlock.stencilState = stencilState;
+
+            m_ActiveStateBlock = m_RenderStateBlock;
         }
 
         RenderStateBlock m_RenderStateBlock;
+        RenderStateBlock m_DefaultStateBlock;
+        RenderStateBlock m_ActiveStateBlock;
 
         public RenderObjectsPass(string profilerTag, RenderPassEvent renderPassEvent, string[] shaderTags, RenderQueueType renderQueueType, int layerMask, RenderObjects.CustomCameraSettings cameraSettings)
         {
@@ -66,12 +70,19 @@ namespace UnityEngine.Experimental.Rendering.Universal
             }
 
             m_RenderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
+            m_DefaultStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
+            m_ActiveStateBlock = m_DefaultStateBlock;
+
             m_CameraSettings = cameraSettings;
 
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            m_ActiveStateBlock = renderingData.cameraData.isSceneViewCamera
+                ? m_DefaultStateBlock
+                : m_RenderStateBlock;
+
             SortingCriteria sortingCriteria = (renderQueueType == RenderQueueType.Transparent)
                 ? SortingCriteria.CommonTransparent
                 : renderingData.cameraData.defaultOpaqueSortFlags;
@@ -81,6 +92,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
             drawingSettings.overrideMaterialPassIndex = overrideMaterialPassIndex;
 
             ref CameraData cameraData = ref renderingData.cameraData;
+
             Camera camera = cameraData.camera;
 
             // In case of camera stacking we need to take the viewport rect from base camera
@@ -94,8 +106,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
                 if (m_CameraSettings.overrideCamera && !cameraData.isStereoEnabled)
                 {
-                    Matrix4x4 projectionMatrix = Matrix4x4.Perspective(m_CameraSettings.cameraFieldOfView, cameraAspect,
-                        camera.nearClipPlane, camera.farClipPlane);
+                    Matrix4x4 projectionMatrix = Matrix4x4.Perspective(m_CameraSettings.cameraFieldOfView, cameraAspect, camera.nearClipPlane, camera.farClipPlane);
                     projectionMatrix = GL.GetGPUProjectionMatrix(projectionMatrix, cameraData.IsCameraProjectionMatrixFlipped());
 
                     Matrix4x4 viewMatrix = cameraData.GetViewMatrix();
@@ -109,7 +120,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
                 cmd.Clear();
 
                 context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref m_FilteringSettings,
-                    ref m_RenderStateBlock);
+                    ref m_ActiveStateBlock);
 
                 if (m_CameraSettings.overrideCamera && m_CameraSettings.restoreCamera && !cameraData.isStereoEnabled)
                 {

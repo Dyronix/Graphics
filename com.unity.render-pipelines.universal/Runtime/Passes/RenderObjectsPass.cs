@@ -13,10 +13,20 @@ namespace UnityEngine.Experimental.Rendering.Universal
         string m_ProfilerTag;
         ProfilingSampler m_ProfilingSampler;
 
-        public Material overrideMaterial { get; set; }
+        public Material overrideMaterial
+        {
+            get;
+            set;
+        }
+
         public int overrideMaterialPassIndex { get; set; }
 
         List<ShaderTagId> m_ShaderTagIdList = new List<ShaderTagId>();
+
+        private Material m_DefaultOverrideMaterial;
+        private Material m_ActiveOverrideMaterial;
+        private int m_DefaultOverrideMaterialPass;
+        private int m_ActiveOverrideMaterialPass;
 
         public void SetDetphState(bool writeEnabled, CompareFunction function = CompareFunction.Less)
         {
@@ -75,21 +85,34 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
             m_CameraSettings = cameraSettings;
 
+            m_DefaultOverrideMaterial = null;
+            m_ActiveOverrideMaterial = m_DefaultOverrideMaterial;
+            m_DefaultOverrideMaterialPass = 0;
+            m_ActiveOverrideMaterialPass = m_DefaultOverrideMaterialPass; 
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            m_ActiveStateBlock = renderingData.cameraData.isSceneViewCamera
-                ? m_DefaultStateBlock
-                : m_RenderStateBlock;
+            if (renderingData.cameraData.isSceneViewCamera)
+            {
+                m_ActiveStateBlock = m_DefaultStateBlock;
+                m_ActiveOverrideMaterial = m_DefaultOverrideMaterial;
+                m_ActiveOverrideMaterialPass = m_DefaultOverrideMaterialPass;
+            }
+            else
+            {
+                m_ActiveStateBlock = m_RenderStateBlock;
+                m_ActiveOverrideMaterial = overrideMaterial;
+                m_ActiveOverrideMaterialPass = overrideMaterialPassIndex;
+            }
 
             SortingCriteria sortingCriteria = (renderQueueType == RenderQueueType.Transparent)
                 ? SortingCriteria.CommonTransparent
                 : renderingData.cameraData.defaultOpaqueSortFlags;
 
             DrawingSettings drawingSettings = CreateDrawingSettings(m_ShaderTagIdList, ref renderingData, sortingCriteria);
-            drawingSettings.overrideMaterial = overrideMaterial;
-            drawingSettings.overrideMaterialPassIndex = overrideMaterialPassIndex;
+            drawingSettings.overrideMaterial = m_ActiveOverrideMaterial;
+            drawingSettings.overrideMaterialPassIndex = m_ActiveOverrideMaterialPass;
 
             ref CameraData cameraData = ref renderingData.cameraData;
 

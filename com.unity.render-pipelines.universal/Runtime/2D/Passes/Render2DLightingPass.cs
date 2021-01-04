@@ -22,6 +22,14 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
             m_Renderer2DData = rendererData;
         }
+        public Render2DLightingPass(Renderer2DData rendererData, RenderPassEvent renderPassEvent)
+        {
+            if (s_SortingLayers == null)
+                s_SortingLayers = SortingLayer.layers;
+
+            m_Renderer2DData = rendererData;
+            this.renderPassEvent = renderPassEvent;
+        }
 
         public void GetTransparencySortingMode(Camera camera, ref SortingSettings sortingSettings)
         {
